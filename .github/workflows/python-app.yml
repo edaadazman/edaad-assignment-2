@@ -40,3 +40,8 @@ jobs:
       run: |
         make run &
         sleep 5  # Allow the server to start before any additional steps
+
+    - name: Test with pytest
+      run: |
+        pytest
+
