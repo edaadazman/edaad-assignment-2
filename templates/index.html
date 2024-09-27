@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMeans Clustering Visualization</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <h1>KMeans Clustering Visualization</h1>
+    <div>
+        <label for="k">Number of Clusters (k):</label>
+        <input type="number" id="k" value="3" min="2" max="10">
+    </div>
+    <button onclick="runKMeans()">Run KMeans</button>
+    <button onclick="newDataset()">Generate New Dataset</button>
+
+    <h2>Final Image:</h2>
+    <div id="images"></div>
+
+    <h2>KMeans Clustering Process (GIF):</h2>
+    <img id="gif" />
+
+    <script>
+        function runKMeans() {
+            const k = document.getElementById('k').value;
+
+            fetch('/run_kmeans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ k: k })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const imagesDiv = document.getElementById('images');
+                    imagesDiv.innerHTML = '';  // Clear previous images
+
+                    data.images.forEach(imgStr => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = 'data:image/png;base64,' + imgStr;
+                        imagesDiv.appendChild(imgElement);
+                    });
+
+                    const gifElement = document.getElementById('gif');
+                    gifElement.src = 'data:image/gif;base64,' + data.gif;
+                });
+        }
+
+        function newDataset() {
+            fetch('/generate_new_dataset', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => { alert(data.message); });
+        }
+    </script>
+</body>
+
+</html>

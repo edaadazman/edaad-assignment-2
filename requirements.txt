@@ -1,0 +1,5 @@
+Flask
+numpy
+matplotlib
+Pillow
+scikit-learn
