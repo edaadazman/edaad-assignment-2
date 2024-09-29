@@ -29,43 +29,38 @@ def index():
 @app.route("/generate_new_dataset", methods=["POST"])
 def generate_new_dataset():
     global X
-    centers = [[0, 0], [2, 2], [-3, 2], [2, -4]]
-    X, _ = datasets.make_blobs(
-        n_samples=300, centers=centers, cluster_std=1, random_state=None
+    n_samples = 500  # The number of points to generate
+    num_features = 2  # Dimensionality of the dataset (2D points)
+
+    # Generate completely random points between -5 and 5
+    X = np.random.uniform(low=-5, high=5, size=(n_samples, num_features))
+
+    return jsonify(
+        {"message": "New dataset generated successfully", "points": X.tolist()}
     )
-    return jsonify({"message": "New dataset generated successfully"})
 
 
 @app.route("/run_kmeans", methods=["POST"])
 def run_kmeans():
     k = int(request.json["k"])
+    init_method = request.json.get(
+        "init_method", "random"
+    )  # Get init method, default to 'random'
 
-    # Run KMeans algorithm
-    kmeans = KMeans(X, k)
+    # Run KMeans algorithm with the selected initialization method
+    kmeans = KMeans(X, k, init_method=init_method)
     kmeans.lloyds()
 
-    # Convert the GIF and final image to base64 to send to the frontend
-    images = kmeans.snaps
-    img_data = []
-    for img in images:
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        img_data.append(img_str)
+    # Send all the snapshots (data points, assignments, centroids) to the frontend
+    history_data = []
+    for i in range(len(kmeans.assignment_history)):
+        step_data = {
+            "assignments": kmeans.assignment_history[i],
+            "centers": kmeans.centers_history[i].tolist(),
+        }
+        history_data.append(step_data)
 
-    # Create GIF
-    gif_file = BytesIO()
-    images[0].save(
-        gif_file,
-        format="GIF",
-        save_all=True,
-        append_images=images[1:],
-        loop=0,
-        duration=500,
-    )
-    gif_base64 = base64.b64encode(gif_file.getvalue()).decode("utf-8")
-
-    return jsonify({"images": img_data, "gif": gif_base64})
+    return jsonify({"history": history_data, "points": X.tolist()})
 
 
 if __name__ == "__main__":

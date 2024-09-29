@@ -1,34 +1,87 @@
 import numpy as np
-from PIL import Image as im
-import matplotlib.pyplot as plt
-from io import BytesIO
 
 
 class KMeans:
-    def __init__(self, data, k):
+    def __init__(self, data, k, init_method="random"):
         self.data = data
         self.k = k
-        self.assignment = [-1 for _ in range(len(data))]
-        self.snaps = []
+        self.assignment = [
+            -1 for _ in range(len(data))
+        ]  # Cluster assignment, -1 means unassigned
+        self.centers_history = []  # Store centers at each step
+        self.assignment_history = []  # Store assignment at each step
+        self.init_method = init_method  # Store the initialization method
 
     def snap(self, centers):
-        # Instead of saving to a temp file, we save directly to memory using BytesIO
-        buf = BytesIO()
-        fig, ax = plt.subplots()
-        ax.scatter(self.data[:, 0], self.data[:, 1], c=self.assignment)
-        ax.scatter(centers[:, 0], centers[:, 1], c="r")
-        fig.savefig(buf, format="png")  # Save directly to a BytesIO buffer
-        plt.close()
-
-        # Load the image directly into Pillow from the buffer
-        buf.seek(0)
-        self.snaps.append(im.open(buf))
+        # Ensure that the current state of data points and their assignments are captured.
+        # If no clusters are assigned yet, the data points are captured with their unassigned state (-1).
+        self.centers_history.append(centers.copy())
+        self.assignment_history.append(
+            self.assignment.copy()
+        )  # Always store the current assignment state
 
     def isunassigned(self, i):
         return self.assignment[i] == -1
 
     def initialize(self):
+        if self.init_method == "farthest_first":
+            return self.initialize_farthest_first()
+        elif self.init_method == "kmeans++":
+            return self.initialize_kmeans_pp()
+        else:  # Default is 'random'
+            return self.initialize_random()
+
+    def initialize_random(self):
         return self.data[np.random.choice(len(self.data), size=self.k, replace=False)]
+
+    # KMeans++ Initialization Method
+    def initialize_kmeans_pp(self):
+        centroids = []
+        # Step 1: Randomly select the first centroid
+        first_centroid_idx = np.random.randint(self.data.shape[0])
+        first_centroid = self.data[first_centroid_idx]
+        centroids.append(first_centroid)
+
+        # Step 2: Select remaining k-1 centroids
+        for _ in range(1, self.k):
+            distances = []
+
+            # Step 3: For each point, compute the squared distance to the nearest centroid
+            for point in self.data:
+                min_dist = np.min(
+                    [self.euclidean_dist(point, c) ** 2 for c in centroids]
+                )
+                distances.append(min_dist)
+
+            # Step 4: Select the next centroid with a probability proportional to the squared distance
+            probabilities = np.array(distances) / np.sum(distances)
+            next_centroid_idx = np.random.choice(self.data.shape[0], p=probabilities)
+            centroids.append(self.data[next_centroid_idx])
+
+        return np.array(centroids)
+
+    # Farthest Point Sampling initialization method
+    def initialize_farthest_first(self):
+        centroids = []
+        initial_centroid_idx = np.random.randint(self.data.shape[0])
+        initial_centroid = self.data[initial_centroid_idx]
+        centroids.append(initial_centroid)
+
+        for _ in range(1, self.k):
+            distances = []
+            for point in self.data:
+                dists = np.array([self.euclidean_dist(point, c) for c in centroids])
+                min_dist = np.min(dists)
+                distances.append(min_dist)
+
+            max_idx = np.argmax(distances)
+            centroids.append(self.data[max_idx])
+
+        return np.array(centroids)
+
+    # Euclidean distance function
+    def euclidean_dist(self, point, centroid):
+        return np.sqrt(np.sum((point - centroid) ** 2))
 
     def make_clusters(self, centers):
         for i in range(len(self.assignment)):
@@ -51,7 +104,6 @@ class KMeans:
                 if self.assignment[j] == i
             ]
             centers.append(np.mean(np.array(cluster), axis=0))
-
         return np.array(centers)
 
     def unassign(self):
@@ -64,14 +116,21 @@ class KMeans:
         return np.linalg.norm(x - y)
 
     def lloyds(self):
+        # Initialize centroids
         centers = self.initialize()
+
+        # Take the first snapshot with the initial centroids and unassigned points
+        self.snap(centers)
+
+        # Perform the clustering iterations
         self.make_clusters(centers)
         new_centers = self.compute_centers()
-        self.snap(new_centers)
+        self.snap(new_centers)  # Take snapshot after first cluster assignment
+
+        # Iterate until the centroids stop changing
         while self.are_diff(centers, new_centers):
             self.unassign()
             centers = new_centers
             self.make_clusters(centers)
             new_centers = self.compute_centers()
-            self.snap(new_centers)
-        return
+            self.snap(new_centers)  # Take snapshot after each iteration
