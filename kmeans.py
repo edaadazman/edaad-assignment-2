@@ -5,20 +5,14 @@ class KMeans:
     def __init__(self, data, k, init_method="random"):
         self.data = data
         self.k = k
-        self.assignment = [
-            -1 for _ in range(len(data))
-        ]  # Cluster assignment, -1 means unassigned
+        self.assignment = [-1 for _ in range(len(data))]
         self.centers_history = []  # Store centers at each step
         self.assignment_history = []  # Store assignment at each step
-        self.init_method = init_method  # Store the initialization method
+        self.init_method = init_method
 
     def snap(self, centers):
-        # Ensure that the current state of data points and their assignments are captured.
-        # If no clusters are assigned yet, the data points are captured with their unassigned state (-1).
         self.centers_history.append(centers.copy())
-        self.assignment_history.append(
-            self.assignment.copy()
-        )  # Always store the current assignment state
+        self.assignment_history.append(self.assignment.copy())
 
     def isunassigned(self, i):
         return self.assignment[i] == -1
@@ -103,7 +97,12 @@ class KMeans:
                 for j in range(len(self.assignment))
                 if self.assignment[j] == i
             ]
-            centers.append(np.mean(np.array(cluster), axis=0))
+            if cluster:
+                centers.append(np.mean(np.array(cluster), axis=0))
+            else:
+                # Handle empty clusters by reinitializing to a random point
+                new_centroid = self.data[np.random.randint(self.data.shape[0])]
+                centers.append(new_centroid)
         return np.array(centers)
 
     def unassign(self):
@@ -115,9 +114,12 @@ class KMeans:
     def dist(self, x, y):
         return np.linalg.norm(x - y)
 
-    def lloyds(self):
-        # Initialize centroids
-        centers = self.initialize()
+    def lloyds(self, manual_centroids=None):
+        # Use manual centroids if provided and valid
+        if manual_centroids is not None and len(manual_centroids) == self.k:
+            centers = np.array(manual_centroids)
+        else:
+            centers = self.initialize()
 
         # Take the first snapshot with the initial centroids and unassigned points
         self.snap(centers)
@@ -127,10 +129,9 @@ class KMeans:
         new_centers = self.compute_centers()
         self.snap(new_centers)  # Take snapshot after first cluster assignment
 
-        # Iterate until the centroids stop changing
         while self.are_diff(centers, new_centers):
             self.unassign()
             centers = new_centers
             self.make_clusters(centers)
             new_centers = self.compute_centers()
-            self.snap(new_centers)  # Take snapshot after each iteration
+            self.snap(new_centers)
