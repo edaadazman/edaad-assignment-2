@@ -73,7 +73,7 @@ class KMeans:
 
         return np.array(centroids)
 
-    # Euclidean distance function
+    # Distance function
     def euclidean_dist(self, point, centroid):
         return np.sqrt(np.sum((point - centroid) ** 2))
 
