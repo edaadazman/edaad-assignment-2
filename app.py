@@ -3,7 +3,7 @@ import numpy as np
 from kmeans import KMeans
 import matplotlib
 
-matplotlib.use("Agg")  # Use non-GUI backend for rendering
+matplotlib.use("Agg")  
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
@@ -12,7 +12,6 @@ import sklearn.datasets as datasets
 
 app = Flask(__name__)
 
-# Global variable to store dataset
 X, _ = datasets.make_blobs(
     n_samples=300,
     centers=[[0, 0], [2, 2], [-3, 2], [2, -4]],
@@ -29,10 +28,9 @@ def index():
 @app.route("/generate_new_dataset", methods=["POST"])
 def generate_new_dataset():
     global X
-    n_samples = 500  # The number of points to generate
-    num_features = 2  # Dimensionality of the dataset (2D points)
+    n_samples = 500  
+    num_features = 2  
 
-    # Generate completely random points between -5 and 5
     X = np.random.uniform(low=-5, high=5, size=(n_samples, num_features))
 
     return jsonify(
@@ -46,21 +44,18 @@ def run_kmeans():
     init_method = request.json.get("init_method", "random")
     manual_centroids = request.json.get("manual_centroids", None)
 
-    print(f"Running KMeans with k={k}, init_method={init_method}")  # Debug log
+    print(f"Running KMeans with k={k}, init_method={init_method}") 
 
-    # Run KMeans algorithm with manual centroids if provided and valid
     if init_method == "manual" and manual_centroids:
         if len(manual_centroids) != k:
             return (
                 jsonify({"error": "Number of manual centroids does not match k"}),
                 400,
             )
-        # Convert manual centroids to numpy array
         manual_centroids = np.array(manual_centroids)
     else:
         manual_centroids = None
 
-    # Initialize KMeans with or without manual centroids
     kmeans = KMeans(X, k, init_method=init_method)
     try:
         kmeans.lloyds(manual_centroids=manual_centroids)
@@ -76,7 +71,7 @@ def run_kmeans():
         }
         history_data.append(step_data)
 
-    print(f"Returning {len(history_data)} steps in history")  # Debug log
+    print(f"Returning {len(history_data)} steps in history") 
 
     return jsonify({"history": history_data, "points": X.tolist()})
 

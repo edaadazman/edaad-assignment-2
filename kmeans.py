@@ -6,8 +6,8 @@ class KMeans:
         self.data = data
         self.k = k
         self.assignment = [-1 for _ in range(len(data))]
-        self.centers_history = []  # Store centers at each step
-        self.assignment_history = []  # Store assignment at each step
+        self.centers_history = []  
+        self.assignment_history = []  
         self.init_method = init_method
 
     def snap(self, centers):
@@ -22,39 +22,33 @@ class KMeans:
             return self.initialize_farthest_first()
         elif self.init_method == "kmeans++":
             return self.initialize_kmeans_pp()
-        else:  # Default is 'random'
+        else:  
             return self.initialize_random()
 
     def initialize_random(self):
         return self.data[np.random.choice(len(self.data), size=self.k, replace=False)]
 
-    # KMeans++ Initialization Method
     def initialize_kmeans_pp(self):
         centroids = []
-        # Step 1: Randomly select the first centroid
         first_centroid_idx = np.random.randint(self.data.shape[0])
         first_centroid = self.data[first_centroid_idx]
         centroids.append(first_centroid)
 
-        # Step 2: Select remaining k-1 centroids
         for _ in range(1, self.k):
             distances = []
 
-            # Step 3: For each point, compute the squared distance to the nearest centroid
             for point in self.data:
                 min_dist = np.min(
                     [self.euclidean_dist(point, c) ** 2 for c in centroids]
                 )
                 distances.append(min_dist)
 
-            # Step 4: Select the next centroid with a probability proportional to the squared distance
             probabilities = np.array(distances) / np.sum(distances)
             next_centroid_idx = np.random.choice(self.data.shape[0], p=probabilities)
             centroids.append(self.data[next_centroid_idx])
 
         return np.array(centroids)
 
-    # Farthest Point Sampling initialization method
     def initialize_farthest_first(self):
         centroids = []
         initial_centroid_idx = np.random.randint(self.data.shape[0])
@@ -73,7 +67,6 @@ class KMeans:
 
         return np.array(centroids)
 
-    # Distance function
     def euclidean_dist(self, point, centroid):
         return np.sqrt(np.sum((point - centroid) ** 2))
 
@@ -100,7 +93,6 @@ class KMeans:
             if cluster:
                 centers.append(np.mean(np.array(cluster), axis=0))
             else:
-                # Handle empty clusters by reinitializing to a random point
                 new_centroid = self.data[np.random.randint(self.data.shape[0])]
                 centers.append(new_centroid)
         return np.array(centers)
@@ -115,19 +107,16 @@ class KMeans:
         return np.linalg.norm(x - y)
 
     def lloyds(self, manual_centroids=None):
-        # Use manual centroids if provided and valid
         if manual_centroids is not None and len(manual_centroids) == self.k:
             centers = np.array(manual_centroids)
         else:
             centers = self.initialize()
 
-        # Take the first snapshot with the initial centroids and unassigned points
         self.snap(centers)
 
-        # Perform the clustering iterations
         self.make_clusters(centers)
         new_centers = self.compute_centers()
-        self.snap(new_centers)  # Take snapshot after first cluster assignment
+        self.snap(new_centers)  
 
         while self.are_diff(centers, new_centers):
             self.unassign()

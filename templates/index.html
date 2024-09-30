@@ -43,7 +43,6 @@
             </div>
         </div>
 
-        <!-- Div for the graph and a separate div for the legend -->
         <div id="plot"></div>
 
         <div class="button-group">
@@ -59,7 +58,7 @@
         let interval = null;
         let history = [];
         let points = [];
-        let selectedCentroids = [];  // Store manually selected centroids
+        let selectedCentroids = [];
         let manualCentroidSelection = false;
 
         function toggleButtons(disable) {
@@ -72,10 +71,10 @@
             const k = parseInt(document.getElementById('k').value);
 
             if (init_method === 'manual') {
-                toggleButtons(true); // Disable buttons when manual
+                toggleButtons(true);
                 startManualCentroidSelection(k);
             } else {
-                toggleButtons(false); // Enable buttons when not manual
+                toggleButtons(false);
                 manualCentroidSelection = false;
             }
         }
@@ -104,7 +103,7 @@
                         history = data.history;
 
                         if (history && history.length > 0) {
-                            plotFinalStep();  // Plot the final converged step
+                            plotFinalStep();
                         } else {
                             console.error("No history data returned from the server.");
                         }
@@ -238,18 +237,18 @@
                     xref: 'paper',
                     x: 0.5
                 },
-                width: 800,  // Fixed width
-                height: 600, // Fixed height
+                width: 800,
+                height: 600,
                 autosize: false,
                 margin: {
                     l: 50,
                     r: 50,
                     t: 50,
-                    b: 70, // Reduced bottom margin
+                    b: 70,
                 },
                 showlegend: false,
-                xaxis: { range: [-6, 6], fixedrange: true }, // Fixed range, no zoom
-                yaxis: { range: [-6, 6], fixedrange: true }  // Fixed range, no zoom
+                xaxis: { range: [-6, 6], fixedrange: true },
+                yaxis: { range: [-6, 6], fixedrange: true }
             };
 
             Plotly.newPlot('plot', [trace], layout);
@@ -309,19 +308,19 @@
                     xref: 'paper',
                     x: 0.5
                 },
-                width: 800,  // Fixed width
-                height: 600, // Fixed height
+                width: 800,
+                height: 600,
                 autosize: false,
                 margin: {
                     l: 50,
                     r: 50,
                     t: 50,
-                    b: 70, // Reduced bottom margin
+                    b: 70,
                 },
                 showlegend: true,
                 legend: {
-                    orientation: "h", // Horizontal legend
-                    y: -0.2, // Minimal gap between the graph and legend
+                    orientation: "h",
+                    y: -0.2,
                 },
                 xaxis: { range: [-6, 6], fixedrange: true },
                 yaxis: { range: [-6, 6], fixedrange: true }
@@ -378,19 +377,19 @@
                     xref: 'paper',
                     x: 0.5
                 },
-                width: 800,  // Fixed width
-                height: 600, // Fixed height
+                width: 800,
+                height: 600,
                 autosize: false,
                 margin: {
                     l: 50,
                     r: 50,
                     t: 50,
-                    b: 70, // Reduced bottom margin
+                    b: 70,
                 },
                 showlegend: true,
                 legend: {
-                    orientation: "h", // Horizontal legend
-                    y: -0.2, // Minimal gap between the graph and legend
+                    orientation: "h",
+                    y: -0.2,
                 },
                 xaxis: { range: [-6, 6], fixedrange: true },
                 yaxis: { range: [-6, 6], fixedrange: true }
